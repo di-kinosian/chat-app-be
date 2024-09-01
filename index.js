@@ -7,11 +7,24 @@ const socketIo = require("socket.io");
 const cors = require("cors");
 const axios = require("axios");
 
+const allowedOrigins = process.env.SOCKET_ORIGINS 
+  ? process.env.SOCKET_ORIGINS.split(',')
+  : ["http://localhost:3000"];
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true,
